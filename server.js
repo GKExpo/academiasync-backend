@@ -17,10 +17,20 @@ const PORT = process.env.PORT || 5000;
 /* =========================
    MIDDLEWARE
 ========================= */
-app.use(cors({
-   origin: 'http://localhost:3000',
-   credentials: true
-}));
+import cors from "cors";
+
+app.use(
+   cors({
+      origin: [
+         "http://localhost",
+         "https://localhost",
+         "capacitor://localhost",
+         "http://localhost:3000",
+      ],
+      credentials: true,
+   })
+);
+
 app.use(express.json());
 
 /* =========================
