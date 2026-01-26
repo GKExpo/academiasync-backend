@@ -91,103 +91,65 @@ router.get(
     }
 );
 
-/* =========================
-   APPROVE / REJECT REQUESTS (ADMIN)
-========================= */
+// Approve / Reject leave (ADMIN)
 router.patch(
-    '/:type/:id',
+    '/leave/:id',
     protect,
     allowRoles('admin'),
     async (req, res) => {
         try {
-            const { type, id } = req.params;
             const { status } = req.body;
 
-            if (!['approved', 'rejected'].includes(status)) {
-                return res.status(400).json({ message: 'Invalid status' });
+            const request = await LeaveRequest.findById(req.params.id);
+            if (!request) {
+                return res.status(404).json({ message: 'Request not found' });
             }
 
-            /* ---- ATTENDANCE REQUEST ---- */
-            if (type === 'attendance') {
-                const request = await AttendanceRequest.findById(id);
-                if (!request) {
-                    return res.status(404).json({ message: 'Request not found' });
-                }
+            request.status = status;
+            request.reviewedBy = req.user.id;
+            await request.save();
 
-                request.status = status;
-                request.reviewedBy = req.user.id;
-                request.reviewedAt = new Date();
-                await request.save();
+            // If approved → create attendance leave entries
+            if (status === 'approved') {
+                let start = new Date(request.fromDate);
+                let end = new Date(request.toDate);
 
-                if (status === 'approved') {
-                    let attendance = await Attendance.findOne({
-                        userId: request.userId,
-                        date: request.requestedDate
-                    });
+                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                    const date = d.toISOString().split('T')[0];
 
-                    if (!attendance) {
-                        attendance = await Attendance.create({
+                    await Attendance.findOneAndUpdate(
+                        { userId: request.userId, date },
+                        {
                             userId: request.userId,
-                            date: request.requestedDate,
-                            checkIn: request.requestedCheckIn,
-                            checkOut: request.requestedCheckOut,
-                            status: 'full_day',
-                            isEdited: true
-                        });
-                    } else {
-                        attendance.checkIn = request.requestedCheckIn;
-                        attendance.checkOut = request.requestedCheckOut;
-                        attendance.status = 'full_day';
-                        attendance.isEdited = true;
-                        attendance.updatedAt = new Date();
-                        await attendance.save();
-                    }
-                }
-
-                return res.json(request);
-            }
-
-            /* ---- LEAVE REQUEST ---- */
-            if (type === 'leave') {
-                const request = await LeaveRequest.findById(id);
-                if (!request) {
-                    return res.status(404).json({ message: 'Request not found' });
-                }
-
-                request.status = status;
-                request.reviewedBy = req.user.id;
-                request.reviewedAt = new Date();
-                await request.save();
-
-                if (status === 'approved') {
-                    const start = new Date(request.fromDate);
-                    const end = new Date(request.toDate);
-
-                    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                        const dateStr = d.toISOString().split('T')[0];
-
-                        await Attendance.deleteOne({
-                            userId: request.userId,
-                            date: dateStr
-                        });
-
-                        await Attendance.create({
-                            userId: request.userId,
-                            date: dateStr,
+                            date,
                             status: 'leave'
-                        });
-                    }
+                        },
+                        { upsert: true }
+                    );
                 }
-
-                return res.json(request);
             }
 
-            res.status(400).json({ message: 'Invalid request type' });
-
+            res.json(request);
         } catch (err) {
             res.status(500).json({ message: err.message });
         }
     }
 );
+
+// Apply leave
+router.post('/leave', protect, async (req, res) => {
+    try {
+        const leave = await LeaveRequest.create({
+            userId: req.user.id,
+            fromDate: req.body.fromDate,
+            toDate: req.body.toDate,
+            reason: req.body.reason
+        });
+
+        res.status(201).json(leave);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+})
 
 export default router;
