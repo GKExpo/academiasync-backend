@@ -9,6 +9,7 @@ import attendanceRoutes from './routes/attendance.js';
 import requestRoutes from './routes/requests.js';
 import adminRoutes from './routes/admin.js';
 
+
 dotenv.config();
 
 const app = express();
@@ -18,18 +19,17 @@ const PORT = process.env.PORT || 5000;
    MIDDLEWARE
 ========================= */
 
-app.use(
-   cors({
-      origin: [
-         "http://localhost",
-         "https://localhost",
-         "capacitor://localhost",
-         "http://localhost:3000",
-         "https://academiasync-backend.onrender.com"
-      ],
-      credentials: true
-   })
-);
+app.use(cors({
+   origin: [
+      'http://localhost:3000',
+      'http://localhost',
+      'https://localhost',
+      'capacitor://localhost',
+      'https://academiasync-backend.onrender.com'
+   ],
+   credentials: true
+}));
+
 
 
 app.use(express.json());
