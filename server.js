@@ -17,7 +17,6 @@ const PORT = process.env.PORT || 5000;
 /* =========================
    MIDDLEWARE
 ========================= */
-import cors from "cors";
 
 app.use(
    cors({
@@ -26,10 +25,12 @@ app.use(
          "https://localhost",
          "capacitor://localhost",
          "http://localhost:3000",
+         "https://academiasync-backend.onrender.com"
       ],
-      credentials: true,
+      credentials: true
    })
 );
+
 
 app.use(express.json());
 
