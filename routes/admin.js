@@ -11,43 +11,34 @@ const router = express.Router();
  * GET /api/admin/subordinates
  * Admin → get all users (students/staff)
  */
-router.get(
-    '/subordinates',
-    protect,
-    async (req, res) => {
-        try {
-            const currentUser = req.user; // comes from protect middleware
+router.get('/subordinates', protect, async (req, res) => {
+    try {
+        const currentUser = req.user;
+        let users = [];
 
-            let users = [];
-
-            // ✅ PRINCIPAL → ONLY HODs
-            if (currentUser.role === 'admin') {
-                users = await User.find({ role: 'hod' })
-                    .select('-passwordHash');
-            }
-
-            // ✅ HOD → ONLY STAFF
-            else if (currentUser.role === 'hod') {
-                users = await User.find({
-                    role: 'staff',
-                    department: currentUser.department
-                }).select('-passwordHash');
-            }
-
-            // ❌ STAFF → NO SUBORDINATES
-            else {
-                return res.status(403).json({
-                    message: 'No subordinates for this role'
-                });
-            }
-
-            res.json(users);
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ message: 'Failed to load subordinates' });
+        // Principal → HODs only
+        if (currentUser.role === 'admin') {
+            users = await User.find({ role: 'hod' }).select('-passwordHash');
         }
+
+        // HOD → Staff only
+        else if (currentUser.role === 'hod') {
+            users = await User.find({
+                role: 'staff',
+                department: currentUser.department
+            }).select('-passwordHash');
+        }
+
+        else {
+            return res.status(403).json({ message: 'No subordinates' });
+        }
+
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to load subordinates' });
     }
-);
+});
+
 
 
 /**
