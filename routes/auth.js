@@ -8,7 +8,7 @@ const router = express.Router();
 /**
  * POST /api/auth/login
  */
-router.post('/login', async (req, res) => {
+router.post('/api/auth', async (req, res) => {
     try {
         const { email, password } = req.body;
 
