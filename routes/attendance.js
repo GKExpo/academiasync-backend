@@ -2,6 +2,7 @@ import express from 'express';
 import Attendance from '../models/Attendance.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { allowRoles } from '../middleware/roleMiddleware.js';
+// routes/attendance.js
 
 const router = express.Router();
 
@@ -139,12 +140,44 @@ router.get('/:userId', protect, async (req, res) => {
         const records = await Attendance.find({
             userId,
             date: { $regex: `^${month}` }
-        });
+        }).sort({ date: 1 });
 
         res.json(records);
     } catch (err) {
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: err.message });
     }
 });
+
+
+// Monthly attendance summary
+router.get('/summary/:userId', protect, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { month } = req.query;
+
+        if (!month) {
+            return res.status(400).json({ message: 'Month is required (YYYY-MM)' });
+        }
+
+        const records = await Attendance.find({
+            userId,
+            date: { $regex: `^${month}` }
+        });
+
+        const summary = {
+            totalDays: records.length,
+            present: records.filter(r => r.status === 'present').length,
+            fullDay: records.filter(r => r.status === 'full_day').length,
+            halfDay: records.filter(r => r.status === 'half_day').length,
+            leave: records.filter(r => r.status === 'leave').length,
+            absent: records.filter(r => r.status === 'absent').length
+        };
+
+        res.json(summary);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 
 export default router;
