@@ -14,18 +14,41 @@ const router = express.Router();
 router.get(
     '/subordinates',
     protect,
-    allowRoles('admin'),
     async (req, res) => {
         try {
-            const users = await User.find({ role: { $ne: 'admin' } })
-                .select('-passwordHash');
+            const currentUser = req.user; // comes from protect middleware
+
+            let users = [];
+
+            // ✅ PRINCIPAL → ONLY HODs
+            if (currentUser.role === 'admin') {
+                users = await User.find({ role: 'hod' })
+                    .select('-passwordHash');
+            }
+
+            // ✅ HOD → ONLY STAFF
+            else if (currentUser.role === 'hod') {
+                users = await User.find({
+                    role: 'staff',
+                    department: currentUser.department
+                }).select('-passwordHash');
+            }
+
+            // ❌ STAFF → NO SUBORDINATES
+            else {
+                return res.status(403).json({
+                    message: 'No subordinates for this role'
+                });
+            }
 
             res.json(users);
         } catch (err) {
-            res.status(500).json({ message: 'Failed to load users' });
+            console.error(err);
+            res.status(500).json({ message: 'Failed to load subordinates' });
         }
     }
 );
+
 
 /**
  * GET /api/admin/attendance-requests
