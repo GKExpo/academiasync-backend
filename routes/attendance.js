@@ -130,24 +130,20 @@ router.get(
     }
 );
 
-// GET attendance by month
+// ✅ GET attendance by month
 router.get('/:userId', protect, async (req, res) => {
     try {
         const { userId } = req.params;
         const { month } = req.query;
 
-        if (!month) {
-            return res.status(400).json({ message: 'Month is required (YYYY-MM)' });
-        }
-
         const records = await Attendance.find({
             userId,
             date: { $regex: `^${month}` }
-        }).sort({ date: 1 });
+        });
 
         res.json(records);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
