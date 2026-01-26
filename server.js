@@ -4,19 +4,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 /* =========================
-   ROUTE IMPORTS
+   LOAD ENV
 ========================= */
-import userRoutes from './routes/users.js';
-import attendanceRoutes from './routes/attendance.js';
-import requestRoutes from './routes/requests.js';
-import authRoutes from './routes/auth.js';
-
-app.use('/api/auth', authRoutes);
-
 dotenv.config();
 
 /* =========================
-   APP INIT
+   APP INIT (MUST BE FIRST)
 ========================= */
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,6 +25,22 @@ app.use(
 );
 
 app.use(express.json());
+
+/* =========================
+   ROUTE IMPORTS
+========================= */
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
+import attendanceRoutes from './routes/attendance.js';
+import requestRoutes from './routes/requests.js';
+
+/* =========================
+   ROUTE MOUNTING
+========================= */
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/requests', requestRoutes);
 
 /* =========================
    DATABASE CONNECTION
@@ -52,25 +61,10 @@ app.get('/', (req, res) => {
 });
 
 /* =========================
-   API ROUTES
-========================= */
-app.use('/api/users', userRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/requests', requestRoutes);
-
-/* =========================
    404 HANDLER
 ========================= */
 app.use((req, res) => {
    res.status(404).json({ message: 'Route not found' });
-});
-
-/* =========================
-   GLOBAL ERROR HANDLER
-========================= */
-app.use((err, req, res, next) => {
-   console.error(err.stack);
-   res.status(500).json({ message: 'Internal server error' });
 });
 
 /* =========================
