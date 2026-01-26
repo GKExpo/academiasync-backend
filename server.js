@@ -16,6 +16,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.get('/', (req, res) => {
+    res.send('AcademiaSync Backend Running');
+});
+
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.error('MongoDB connection error:', err));
