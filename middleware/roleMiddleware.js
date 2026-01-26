@@ -1,15 +1,8 @@
-export const allowRoles = (...allowedRoles) => {
+export const allowRoles = (...roles) => {
     return (req, res, next) => {
-        const userRoles = req.user.role || [];
-
-        const hasAccess = userRoles.some(role =>
-            allowedRoles.includes(role)
-        );
-
-        if (!hasAccess) {
+        if (!req.user || !req.user.role.some(r => roles.includes(r))) {
             return res.status(403).json({ message: 'Access denied' });
         }
-
         next();
     };
 };
