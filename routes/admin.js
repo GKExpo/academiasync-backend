@@ -11,33 +11,21 @@ const router = express.Router();
  * GET /api/admin/subordinates
  * Admin → get all users (students/staff)
  */
+// admin route
 router.get('/subordinates', protect, async (req, res) => {
-    try {
-        const currentUser = req.user;
-        let users = [];
+    let users;
 
-        // Principal → HODs only
-        if (currentUser.role === 'admin') {
-            users = await User.find({ role: 'hod' }).select('-passwordHash');
-        }
-
-        // HOD → Staff only
-        else if (currentUser.role === 'hod') {
-            users = await User.find({
-                role: 'staff',
-                department: currentUser.department
-            }).select('-passwordHash');
-        }
-
-        else {
-            return res.status(403).json({ message: 'No subordinates' });
-        }
-
-        res.json(users);
-    } catch (err) {
-        res.status(500).json({ message: 'Failed to load subordinates' });
+    if (req.user.role === 'principal') {
+        users = await User.find({ role: 'hod' });
+    } else if (req.user.role === 'hod') {
+        users = await User.find({ role: 'staff', department: req.user.department });
+    } else {
+        users = [];
     }
+
+    res.json(users);
 });
+
 
 
 
