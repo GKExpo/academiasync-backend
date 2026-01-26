@@ -10,10 +10,6 @@ import userRoutes from './routes/users.js';
 import attendanceRoutes from './routes/attendance.js';
 import requestRoutes from './routes/requests.js';
 import authRoutes from './routes/auth.js';
-import User from '../models/User.js';
-import Attendance from '../models/Attendance.js';
-import AttendanceRequest from '../models/AttendanceRequest.js';
-import LeaveRequest from '../models/LeaveRequest.js';
 
 app.use('/api/auth', authRoutes);
 
