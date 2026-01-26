@@ -1,43 +1,120 @@
 import express from 'express';
 import User from '../models/User.js';
+import AttendanceRequest from '../models/AttendanceRequest.js';
+import LeaveRequest from '../models/LeaveRequest.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { allowRoles } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
+/**
+ * GET /api/admin/subordinates
+ * Admin → get all users (students/staff)
+ */
 router.get(
-    '/users',
-    protect,
-    allowRoles('admin'),
-    async (req, res) => {
-        const users = await User.find();
-        res.json(users);
-    }
-);
-
-router.get(
-    '/attendance-stats',
+    '/subordinates',
     protect,
     allowRoles('admin'),
     async (req, res) => {
         try {
-            const { month } = req.query;
+            const users = await User.find({ role: { $ne: 'admin' } })
+                .select('-passwordHash');
 
-            const records = await Attendance.find({
-                date: { $regex: `^${month}` }
+            res.json(users);
+        } catch (err) {
+            res.status(500).json({ message: 'Failed to load users' });
+        }
+    }
+);
+
+/**
+ * GET /api/admin/attendance-requests
+ * Admin → pending attendance correction requests
+ */
+router.get(
+    '/attendance-requests',
+    protect,
+    allowRoles('admin'),
+    async (req, res) => {
+        try {
+            const requests = await AttendanceRequest.find({
+                status: 'pending'
             });
 
-            const stats = {
-                totalRecords: records.length,
-                fullDay: records.filter(r => r.status === 'full_day').length,
-                halfDay: records.filter(r => r.status === 'half_day').length,
-                leave: records.filter(r => r.status === 'leave').length,
-                absent: records.filter(r => r.status === 'absent').length
-            };
-
-            res.json(stats);
+            res.json(requests);
         } catch (err) {
-            res.status(500).json({ message: err.message });
+            res.status(500).json({ message: 'Failed to load attendance requests' });
+        }
+    }
+);
+
+/**
+ * GET /api/admin/leave-requests
+ * Admin → pending leave requests
+ */
+router.get(
+    '/leave-requests',
+    protect,
+    allowRoles('admin'),
+    async (req, res) => {
+        try {
+            const requests = await LeaveRequest.find({
+                status: 'pending'
+            });
+
+            res.json(requests);
+        } catch (err) {
+            res.status(500).json({ message: 'Failed to load leave requests' });
+        }
+    }
+);
+
+/**
+ * POST /api/admin/attendance-requests/:id
+ * Approve / Reject attendance request
+ */
+router.post(
+    '/attendance-requests/:id',
+    protect,
+    allowRoles('admin'),
+    async (req, res) => {
+        const { status } = req.body;
+
+        try {
+            const request = await AttendanceRequest.findByIdAndUpdate(
+                req.params.id,
+                { status, approvedBy: req.user.id },
+                { new: true }
+            );
+
+            res.json(request);
+        } catch (err) {
+            res.status(500).json({ message: 'Failed to update request' });
+        }
+    }
+);
+
+/**
+ * POST /api/admin/leave-requests/:id
+ * Approve / Reject leave request
+ */
+router.post(
+    '/leave-requests/:id',
+    protect,
+    allowRoles('admin'),
+    async (req, res) => {
+        const { status } = req.body;
+
+        try {
+            const request = await LeaveRequest.findByIdAndUpdate(
+                req.params.id,
+                { status, approvedBy: req.user.id },
+                { new: true }
+            );
+
+            res.json(request);
+        } catch (err) {
+            res.status(500).json({ message: 'Failed to update request' });
         }
     }
 );
