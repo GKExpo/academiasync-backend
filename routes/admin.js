@@ -9,22 +9,34 @@ const router = express.Router();
 
 /**
  * GET /api/admin/subordinates
- * Admin → get all users (students/staff)
+ * Principal → sees HODs
+ * HOD → sees Staff
  */
-// admin route
-router.get('/subordinates', protect, async (req, res) => {
-    let users;
+router.get(
+    '/subordinates',
+    protect,
+    allowRoles('principal', 'admin'), // adjust if needed
+    async (req, res) => {
+        try {
+            let filter = {};
 
-    if (req.user.role === 'principal') {
-        users = await User.find({ role: 'hod' });
-    } else if (req.user.role === 'hod') {
-        users = await User.find({ role: 'staff', department: req.user.department });
-    } else {
-        users = [];
+            if (req.user.role === 'principal') {
+                filter = { role: 'hod' }; // principal sees HODs
+            } else if (req.user.role === 'hod') {
+                filter = { role: 'staff', department: req.user.department };
+            } else {
+                return res.status(403).json({ message: 'Access denied' });
+            }
+
+            const users = await User.find(filter).select('-passwordHash');
+
+            res.json(users);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Server error' });
+        }
     }
-
-    res.json(users);
-});
+);
 
 
 
