@@ -3,6 +3,8 @@ import User from '../models/User.js';
 import AttendanceRequest from '../models/AttendanceRequest.js';
 import LeaveRequest from '../models/LeaveRequest.js';
 import { protect } from '../middleware/authMiddleware.js';
+import Attendance from '../models/Attendance.js';
+
 
 const router = express.Router();
 
@@ -145,5 +147,22 @@ router.patch('/leave/:id', protect, async (req, res) => {
         res.status(500).json({ message: 'Failed to update leave request' });
     }
 });
+
+router.get(
+    '/user-attendance/:id',
+    protect,
+    allowRoles('admin'),
+    async (req, res) => {
+        try {
+            const records = await Attendance.find({
+                userId: req.params.id
+            }).sort({ date: -1 });
+
+            res.json(records);
+        } catch (err) {
+            res.status(500).json({ message: 'Failed to load attendance' });
+        }
+    }
+);
 
 export default router;
