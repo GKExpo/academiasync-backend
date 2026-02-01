@@ -8,9 +8,9 @@ import { allowRoles } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-/* =========================
-   CREATE ATTENDANCE EDIT REQUEST (USER)
-========================= */
+/* ======================================================
+   CREATE ATTENDANCE CORRECTION REQUEST (USER)
+====================================================== */
 router.post(
     '/attendance',
     protect,
@@ -25,73 +25,115 @@ router.post(
                 reason
             } = req.body;
 
+            if (!requestedDate || !reason) {
+                return res.status(400).json({ message: 'Missing required fields' });
+            }
+
             const request = await AttendanceRequest.create({
                 attendanceId,
-                userId: req.user.id,
+                userId: req.user._id,
                 requestedDate,
                 requestedCheckIn,
                 requestedCheckOut,
-                reason
+                reason,
+                status: 'PENDING'
             });
 
             res.status(201).json(request);
         } catch (err) {
-            res.status(500).json({ message: err.message });
+            res.status(500).json({ message: 'Failed to create request' });
         }
     }
 );
 
-/* =========================
-   CREATE LEAVE REQUEST (USER)
-========================= */
+/* ======================================================
+   APPLY LEAVE (USER)
+====================================================== */
 router.post(
     '/leave',
     protect,
     allowRoles('user'),
     async (req, res) => {
         try {
-            const {
-                fromDate,
-                toDate,
-                leaveType,
-                reason
-            } = req.body;
+            const { fromDate, toDate, reason } = req.body;
+
+            if (!fromDate || !toDate || !reason) {
+                return res.status(400).json({ message: 'All fields required' });
+            }
+
+            if (new Date(fromDate) > new Date(toDate)) {
+                return res.status(400).json({ message: 'Invalid date range' });
+            }
 
             const request = await LeaveRequest.create({
-                userId: req.user.id,
+                userId: req.user._id,
                 fromDate,
                 toDate,
-                leaveType,
-                reason
+                reason,
+                status: 'PENDING'
             });
 
             res.status(201).json(request);
         } catch (err) {
-            res.status(500).json({ message: err.message });
+            res.status(500).json({ message: 'Failed to apply leave' });
         }
     }
 );
 
-/* =========================
-   GET PENDING REQUESTS (ADMIN)
-========================= */
+/* ======================================================
+   GET PENDING REQUESTS (PRINCIPAL / HOD)
+====================================================== */
 router.get(
     '/pending',
     protect,
     allowRoles('admin'),
     async (req, res) => {
         try {
-            const attendance = await AttendanceRequest.find({ status: 'pending' });
-            const leave = await LeaveRequest.find({ status: 'pending' });
+            const currentUser = await User.findById(req.user._id);
+
+            let subordinateIds = [];
+
+            // PRINCIPAL (only admin role)
+            if (currentUser.role.length === 1 && currentUser.role.includes('admin')) {
+                const hods = await User.find({
+                    role: { $all: ['admin', 'user'] }
+                });
+
+                subordinateIds = hods.map(h => h._id);
+            }
+
+            // HOD (admin + user role)
+            else if (
+                currentUser.role.includes('admin') &&
+                currentUser.role.includes('user')
+            ) {
+                const staff = await User.find({
+                    reportsTo: req.user._id
+                });
+
+                subordinateIds = staff.map(s => s._id);
+            }
+
+            const attendance = await AttendanceRequest.find({
+                userId: { $in: subordinateIds },
+                status: 'PENDING'
+            });
+
+            const leave = await LeaveRequest.find({
+                userId: { $in: subordinateIds },
+                status: 'PENDING'
+            });
 
             res.json({ attendance, leave });
         } catch (err) {
-            res.status(500).json({ message: err.message });
+            res.status(500).json({ message: 'Failed to fetch pending requests' });
         }
     }
 );
 
-// Approve / Reject leave (ADMIN)
+/* ======================================================
+   APPROVE / REJECT LEAVE (ADMIN / HOD)
+====================================================== */
 router.patch(
     '/leave/:id',
     protect,
@@ -100,21 +142,30 @@ router.patch(
         try {
             const { status } = req.body;
 
+            if (!['APPROVED', 'REJECTED'].includes(status)) {
+                return res.status(400).json({ message: 'Invalid status' });
+            }
+
             const request = await LeaveRequest.findById(req.params.id);
+
             if (!request) {
                 return res.status(404).json({ message: 'Request not found' });
             }
 
             request.status = status;
-            request.reviewedBy = req.user.id;
+            request.reviewedBy = req.user._id;
             await request.save();
 
-            // If approved → create attendance leave entries
-            if (status === 'approved') {
+            /* If APPROVED → create leave attendance records */
+            if (status === 'APPROVED') {
                 let start = new Date(request.fromDate);
                 let end = new Date(request.toDate);
 
-                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                for (
+                    let d = new Date(start);
+                    d <= end;
+                    d.setDate(d.getDate() + 1)
+                ) {
                     const date = d.toISOString().split('T')[0];
 
                     await Attendance.findOneAndUpdate(
@@ -122,7 +173,7 @@ router.patch(
                         {
                             userId: request.userId,
                             date,
-                            status: 'leave'
+                            status: 'LEAVE'
                         },
                         { upsert: true }
                     );
@@ -131,25 +182,9 @@ router.patch(
 
             res.json(request);
         } catch (err) {
-            res.status(500).json({ message: err.message });
+            res.status(500).json({ message: 'Failed to update leave' });
         }
     }
 );
-
-// Apply leave
-router.post('/leave', protect, async (req, res) => {
-    try {
-        const leave = await LeaveRequest.create({
-            userId: req.user.id,
-            fromDate: req.body.fromDate,
-            toDate: req.body.toDate,
-            reason: req.body.reason
-        });
-
-        res.status(201).json(leave);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-})
 
 export default router;
