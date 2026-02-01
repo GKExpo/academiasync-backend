@@ -62,7 +62,7 @@ router.post(
             }
 
             const leave = await LeaveRequest.create({
-                userId: req.user.id,
+                user: req.user.id,
                 fromDate,
                 toDate,
                 reason,

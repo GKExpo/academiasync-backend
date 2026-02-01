@@ -1,20 +1,20 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const leaveRequestSchema = new mongoose.Schema(
     {
         user: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
+            ref: 'User',
             required: true
         },
 
         fromDate: {
-            type: Date,
+            type: String,
             required: true
         },
 
         toDate: {
-            type: Date,
+            type: String,
             required: true
         },
 
@@ -25,17 +25,16 @@ const leaveRequestSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["PENDING", "APPROVED", "REJECTED"],
-            default: "PENDING"
+            enum: ['pending', 'approved', 'rejected'],
+            default: 'pending'
         },
 
-        approvedBy: {
+        reviewedBy: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            default: null
+            ref: 'User'
         }
     },
     { timestamps: true }
 );
 
-export default mongoose.model("LeaveRequest", leaveRequestSchema);
+export default mongoose.model('LeaveRequest', leaveRequestSchema);
