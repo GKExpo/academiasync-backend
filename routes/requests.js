@@ -88,23 +88,23 @@ router.get(
     allowRoles('admin'),
     async (req, res) => {
         try {
-            const currentUser = await User.findById(req.user._id);
 
             let subordinateIds = [];
 
-            // PRINCIPAL (only admin role)
-            if (currentUser.role.length === 1 && currentUser.role.includes('admin')) {
+            // Principal (only admin)
+            if (req.user.role.length === 1 && req.user.role.includes('admin')) {
                 const hods = await User.find({
-                    role: { $all: ['admin', 'user'] }
+                    role: { $in: ['admin'] },
+                    _id: { $ne: req.user._id }
                 });
 
                 subordinateIds = hods.map(h => h._id);
             }
 
-            // HOD (admin + user role)
+            // HOD (admin + user)
             else if (
-                currentUser.role.includes('admin') &&
-                currentUser.role.includes('user')
+                req.user.role.includes('admin') &&
+                req.user.role.includes('user')
             ) {
                 const staff = await User.find({
                     reportsTo: req.user._id
@@ -114,21 +114,24 @@ router.get(
             }
 
             const attendance = await AttendanceRequest.find({
-                userId: { $in: subordinateIds },
-                status: 'PENDING'
+                status: 'pending',
+                userId: { $in: subordinateIds }
             });
 
             const leave = await LeaveRequest.find({
-                userId: { $in: subordinateIds },
-                status: 'PENDING'
+                status: 'pending',
+                user: { $in: subordinateIds }
             });
 
             res.json({ attendance, leave });
+
         } catch (err) {
-            res.status(500).json({ message: 'Failed to fetch pending requests' });
+            console.error(err);
+            res.status(500).json({ message: err.message });
         }
     }
 );
+
 
 /* ======================================================
    APPROVE / REJECT LEAVE (ADMIN / HOD)
