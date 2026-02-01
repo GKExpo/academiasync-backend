@@ -52,33 +52,27 @@ router.post(
 router.post(
     '/leave',
     protect,
-    allowRoles('user'),
+    allowRoles('user', 'admin'),
     async (req, res) => {
         try {
             const { fromDate, toDate, reason } = req.body;
 
-            if (!fromDate || !toDate || !reason) {
-                return res.status(400).json({ message: 'All fields required' });
-            }
-
-            if (new Date(fromDate) > new Date(toDate)) {
-                return res.status(400).json({ message: 'Invalid date range' });
-            }
-
-            const request = await LeaveRequest.create({
-                userId: req.user._id,
+            const leave = await LeaveRequest.create({
+                userId: req.user.id,
                 fromDate,
                 toDate,
                 reason,
-                status: 'PENDING'
+                status: 'pending'
             });
 
-            res.status(201).json(request);
+            res.status(201).json(leave);
         } catch (err) {
+            console.error(err);
             res.status(500).json({ message: 'Failed to apply leave' });
         }
     }
 );
+
 
 /* ======================================================
    GET PENDING REQUESTS (PRINCIPAL / HOD)
