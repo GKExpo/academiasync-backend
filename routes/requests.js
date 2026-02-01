@@ -141,8 +141,8 @@ router.patch(
         try {
             const { status } = req.body;
 
-            if (!['APPROVED', 'REJECTED'].includes(status)) {
-                return res.status(400).json({ message: 'Invalid status' });
+            if (!['approved', 'rejected'].includes(status)) {
+                return res.status(400).json({ message: 'Invalid status value' });
             }
 
             const request = await LeaveRequest.findById(req.params.id);
@@ -152,27 +152,23 @@ router.patch(
             }
 
             request.status = status;
-            request.reviewedBy = req.user._id;
+            request.reviewedBy = req.user.id;
             await request.save();
 
-            /* If APPROVED → create leave attendance records */
+            // If approved → mark attendance as leave
             if (status === 'approved') {
                 let start = new Date(request.fromDate);
                 let end = new Date(request.toDate);
 
-                for (
-                    let d = new Date(start);
-                    d <= end;
-                    d.setDate(d.getDate() + 1)
-                ) {
+                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                     const date = d.toISOString().split('T')[0];
 
                     await Attendance.findOneAndUpdate(
-                        { userId: request.userId, date },
+                        { userId: request.user, date },
                         {
-                            userId: request.userId,
+                            userId: request.user,
                             date,
-                            status: 'LEAVE'
+                            status: 'leave'
                         },
                         { upsert: true }
                     );
@@ -180,10 +176,13 @@ router.patch(
             }
 
             res.json(request);
+
         } catch (err) {
-            res.status(500).json({ message: 'Failed to update leave' });
+            console.error("Leave approval error:", err);
+            res.status(500).json({ message: 'Failed to update leave request' });
         }
     }
 );
+
 
 export default router;
