@@ -46,16 +46,20 @@ router.post(
     }
 );
 
-/* ======================================================
-   APPLY LEAVE (USER)
-====================================================== */
+/* =========================
+   APPLY LEAVE (USER + HOD)
+========================= */
 router.post(
     '/leave',
     protect,
-    allowRoles('user', 'admin'),
+    allowRoles('user', 'admin'), // HOD also allowed
     async (req, res) => {
         try {
             const { fromDate, toDate, reason } = req.body;
+
+            if (!fromDate || !toDate || !reason) {
+                return res.status(400).json({ message: 'All fields are required' });
+            }
 
             const leave = await LeaveRequest.create({
                 userId: req.user.id,
@@ -66,8 +70,9 @@ router.post(
             });
 
             res.status(201).json(leave);
+
         } catch (err) {
-            console.error(err);
+            console.error('Leave apply error:', err);
             res.status(500).json({ message: 'Failed to apply leave' });
         }
     }
@@ -151,7 +156,7 @@ router.patch(
             await request.save();
 
             /* If APPROVED → create leave attendance records */
-            if (status === 'APPROVED') {
+            if (status === 'approved') {
                 let start = new Date(request.fromDate);
                 let end = new Date(request.toDate);
 
