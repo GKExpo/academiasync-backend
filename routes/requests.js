@@ -5,6 +5,7 @@ import LeaveRequest from '../models/LeaveRequest.js';
 import User from '../models/User.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { allowRoles } from '../middleware/roleMiddleware.js';
+import Notification from '../models/Notification.js';
 
 const router = express.Router();
 
@@ -158,6 +159,12 @@ router.patch(
             request.reviewedBy = req.user.id;
             await request.save();
 
+            await Notification.create({
+                userId: request.userId,
+                title: status === 'approved' ? "Leave Approved" : "Leave Rejected",
+                message: `Your leave from ${request.fromDate} to ${request.toDate} was ${status}`,
+                type: "leave"
+            });
             // If approved → mark attendance as leave
             if (status === 'approved') {
                 let start = new Date(request.fromDate);

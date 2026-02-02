@@ -9,6 +9,7 @@ import attendanceRoutes from './routes/attendance.js';
 import requestRoutes from './routes/requests.js';
 import adminRoutes from './routes/admin.js';
 import editRequestRoutes from './routes/editRequests.js';
+import notificationRoutes from './routes/notifications.js';
 
 dotenv.config();
 
@@ -55,6 +56,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/requests', editRequestRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 /* =========================
    SERVER
