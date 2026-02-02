@@ -8,7 +8,7 @@ import userRoutes from './routes/users.js';
 import attendanceRoutes from './routes/attendance.js';
 import requestRoutes from './routes/requests.js';
 import adminRoutes from './routes/admin.js';
-
+import editRequestRoutes from './routes/editRequests.js';
 
 dotenv.config();
 
@@ -54,6 +54,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/requests', editRequestRoutes);
 
 /* =========================
    SERVER
