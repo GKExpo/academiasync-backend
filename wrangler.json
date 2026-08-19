@@ -1,1 +1,7 @@
-{ "name": "academiasync-backend", "main": "src/index.ts", "compatibility_date": "2024-04-05", "d1_databases": [ { "binding": "DB", "database_name": "academiasync-d1", "database_id": "xxx-xxx-xxx" } ], "observability": { "enabled": true } }
+{ "name": "academiasync-backend", "main": "src/index.ts", "compatibility_date": "2024-04-05",  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "academiasync-d1",
+      "database_id": "57aaea98-12b4-469f-b2df-bef3f1ac0ae2"
+    }
+  ], "observability": { "enabled": true } }
