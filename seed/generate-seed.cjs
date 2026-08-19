@@ -3,7 +3,7 @@ const { randomUUID } = require('crypto');
 const fs = require('fs');
 
 async function main() {
-    const password = process.env.DEV_PASSWORD || 'Dev#Temp#Pass123';
+    const password = process.env.DEV_PASSWORD || 'Test1234';
     const hash = await bcrypt.hash(password, 10);
 
     const principalId = randomUUID();

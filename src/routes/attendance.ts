@@ -20,8 +20,8 @@ router.post('/check-in', protect, allowRoles('staff', 'hod', 'principal'), async
     }
 
     const id = crypto.randomUUID();
-    await c.env.DB.prepare('INSERT INTO attendance (id, user_id, date, check_in, status) VALUES (?, ?, ?, ?, ?)')
-      .bind(id, user.id, date, time, 'present')
+    await c.env.DB.prepare('INSERT INTO attendance (id, user_id, date, check_in, status, source) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(id, user.id, date, time, 'present', 'manual')
       .run();
 
     const record = await c.env.DB.prepare('SELECT * FROM attendance WHERE id = ?').bind(id).first();
