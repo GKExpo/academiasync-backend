@@ -4,10 +4,11 @@ import { protect, allowRoles } from '../middleware/auth';
 
 const router = new Hono<{ Bindings: Bindings, Variables: { user: any } }>();
 
-const getLocalDateString = () => new Date().toISOString().split('T')[0];
-const getLocalTimeString = () => new Date().toTimeString().slice(0, 5);
+const getLocalDateString = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+const getLocalTimeString = () => new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
 
-router.post('/check-in', protect, allowRoles('user', 'admin'), async (c) => {
+router.post('/check-in', protect, allowRoles('staff', 'hod', 'principal'), async (c) => {
+
   try {
     const user = c.get('user');
     const date = getLocalDateString();
@@ -30,7 +31,7 @@ router.post('/check-in', protect, allowRoles('user', 'admin'), async (c) => {
   }
 });
 
-router.post('/check-out', protect, allowRoles('user', 'admin'), async (c) => {
+router.post('/check-out', protect, allowRoles('staff', 'hod', 'principal'), async (c) => {
   try {
     const user = c.get('user');
     const date = getLocalDateString();
@@ -58,7 +59,7 @@ router.post('/check-out', protect, allowRoles('user', 'admin'), async (c) => {
   }
 });
 
-router.get('/me', protect, allowRoles('user', 'admin'), async (c) => {
+router.get('/me', protect, allowRoles('staff', 'hod', 'principal'), async (c) => {
   try {
     const user = c.get('user');
     const month = c.req.query('month');
@@ -80,7 +81,7 @@ router.get('/me', protect, allowRoles('user', 'admin'), async (c) => {
   }
 });
 
-router.get('/user/:userId', protect, allowRoles('admin'), async (c) => {
+router.get('/user/:userId', protect, allowRoles('principal', 'hod'), async (c) => {
   try {
     const userId = c.req.param('userId');
     const month = c.req.query('month');

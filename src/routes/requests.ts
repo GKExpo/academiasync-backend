@@ -4,7 +4,7 @@ import { protect, allowRoles } from '../middleware/auth';
 
 const router = new Hono<{ Bindings: Bindings, Variables: { user: any } }>();
 
-router.post('/attendance', protect, allowRoles('user'), async (c) => {
+router.post('/attendance', protect, allowRoles('staff', 'hod'), async (c) => {
   try {
     const user = c.get('user');
     const body = await c.req.json();
@@ -27,7 +27,7 @@ router.post('/attendance', protect, allowRoles('user'), async (c) => {
   }
 });
 
-router.post('/leave', protect, allowRoles('user', 'admin'), async (c) => {
+router.post('/leave', protect, allowRoles('staff', 'hod', 'principal'), async (c) => {
   try {
     const user = c.get('user');
     const body = await c.req.json();
@@ -50,17 +50,17 @@ router.post('/leave', protect, allowRoles('user', 'admin'), async (c) => {
   }
 });
 
-router.get('/pending', protect, allowRoles('admin'), async (c) => {
+router.get('/pending', protect, allowRoles('principal', 'hod'), async (c) => {
   try {
     const user = c.get('user');
     let subordinateIds: string[] = [];
 
-    if (user.roles.length === 1 && user.roles.includes('admin')) {
+    if (user.roles.includes('principal')) {
       // Principal sees HODs
-      const { results } = await c.env.DB.prepare('SELECT id FROM users WHERE roles LIKE ? AND id != ? AND is_active = 1')
-        .bind('%"admin"%', user.id).all();
+      const { results } = await c.env.DB.prepare('SELECT id FROM users WHERE roles LIKE ? AND is_active = 1')
+        .bind('%"hod"%').all();
       subordinateIds = results.map(r => r.id as string);
-    } else if (user.roles.includes('admin') && user.roles.includes('user')) {
+    } else if (user.roles.includes('hod')) {
       // HOD sees Staff
       const { results } = await c.env.DB.prepare('SELECT id FROM users WHERE reports_to = ? AND is_active = 1')
         .bind(user.id).all();
@@ -89,7 +89,7 @@ router.get('/pending', protect, allowRoles('admin'), async (c) => {
   }
 });
 
-router.patch('/leave/:id', protect, allowRoles('admin'), async (c) => {
+router.patch('/leave/:id', protect, allowRoles('principal', 'hod'), async (c) => {
   try {
     const user = c.get('user');
     const id = c.req.param('id');

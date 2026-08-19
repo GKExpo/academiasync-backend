@@ -4,7 +4,7 @@ import { protect, allowRoles } from '../middleware/auth';
 
 const router = new Hono<{ Bindings: Bindings, Variables: { user: any } }>();
 
-router.get('/', protect, allowRoles('admin'), async (c) => {
+router.get('/', protect, allowRoles('principal', 'hod'), async (c) => {
   try {
     const { results } = await c.env.DB.prepare('SELECT id, name, email, roles, department, employee_id, reports_to, is_active FROM users WHERE is_active = 1').all();
     const mapped = results.map(u => ({ ...u, _id: u.id, role: JSON.parse(u.roles as string) }));
@@ -24,7 +24,7 @@ router.get('/:id', protect, async (c) => {
     const user = c.get('user');
     const id = c.req.param('id');
     
-    if (!user.roles.includes('admin') && user.id !== id) {
+    if (!user.roles.includes('principal') && !user.roles.includes('hod') && user.id !== id) {
       return c.json({ message: 'Access denied' }, 403);
     }
 
@@ -43,7 +43,7 @@ router.get('/:id', protect, async (c) => {
   }
 });
 
-router.get('/:id/subordinates', protect, allowRoles('admin'), async (c) => {
+router.get('/:id/subordinates', protect, allowRoles('principal', 'hod'), async (c) => {
   try {
     const id = c.req.param('id');
     const { results } = await c.env.DB.prepare('SELECT id, name, email, roles, department, employee_id, reports_to, is_active FROM users WHERE reports_to = ? AND is_active = 1')

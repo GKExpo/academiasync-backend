@@ -9,11 +9,11 @@ router.get('/subordinates', protect, async (c) => {
     const user = c.get('user');
     let results: any[] = [];
 
-    if (user.roles.length === 1 && user.roles.includes('admin')) {
-      const res = await c.env.DB.prepare(`SELECT id, name, email, roles, department, employee_id, reports_to FROM users WHERE roles LIKE '%"admin"%' AND roles LIKE '%"user"%' AND is_active = 1`).all();
+    if (user.roles.includes('principal')) {
+      const res = await c.env.DB.prepare(`SELECT id, name, email, roles, department, employee_id, reports_to FROM users WHERE roles LIKE '%"hod"%' AND is_active = 1`).all();
       results = res.results;
-    } else if (user.roles.includes('admin') && user.roles.includes('user')) {
-      const res = await c.env.DB.prepare(`SELECT id, name, email, roles, department, employee_id, reports_to FROM users WHERE reports_to = ? AND roles NOT LIKE '%"admin"%' AND is_active = 1`)
+    } else if (user.roles.includes('hod')) {
+      const res = await c.env.DB.prepare(`SELECT id, name, email, roles, department, employee_id, reports_to FROM users WHERE reports_to = ? AND is_active = 1`)
         .bind(user.id).all();
       results = res.results;
     } else {
@@ -76,7 +76,7 @@ router.patch('/leave/:id', protect, async (c) => {
   }
 });
 
-router.get('/user-attendance/:id', protect, allowRoles('admin'), async (c) => {
+router.get('/user-attendance/:id', protect, allowRoles('principal', 'hod'), async (c) => {
   try {
     const id = c.req.param('id');
     const { results } = await c.env.DB.prepare(`SELECT * FROM attendance WHERE user_id = ? ORDER BY date DESC`).bind(id).all();

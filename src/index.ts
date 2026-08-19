@@ -6,6 +6,7 @@ import userRoutes from './routes/users';
 import attendanceRoutes from './routes/attendance';
 import requestRoutes from './routes/requests';
 import adminRoutes from './routes/admin';
+import notificationRoutes from './routes/notifications';
 
 export type Bindings = {
   DB: D1Database;
@@ -47,5 +48,6 @@ app.route('/api/users', userRoutes);
 app.route('/api/attendance', attendanceRoutes);
 app.route('/api/requests', requestRoutes);
 app.route('/api/admin', adminRoutes);
+app.route('/api/notifications', notificationRoutes);
 
 export default app;
