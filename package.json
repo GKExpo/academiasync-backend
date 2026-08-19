@@ -4,16 +4,19 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute academiasync-d1 --local --file=./migrations/0000_schema.sql",
+    "db:seed": "wrangler d1 execute academiasync-d1 --local --file=./seed/seed.sql"
   },
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "joi": "^18.0.0",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.1.5"
+    "bcryptjs": "^3.0.3",
+    "hono": "^4.13.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260819.1",
+    "@types/bcryptjs": "^2.4.6",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.124.0"
   }
 }
