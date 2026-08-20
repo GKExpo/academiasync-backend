@@ -42,9 +42,19 @@ router.post('/check-out', protect, allowRoles('staff', 'hod', 'principal'), asyn
       return c.json({ message: 'No check-in found for today' }, 400);
     }
 
-    const start = parseInt((record.check_in as string).split(':')[0]) * 60 + parseInt((record.check_in as string).split(':')[1]);
-    const end = parseInt(time.split(':')[0]) * 60 + parseInt(time.split(':')[1]);
-    const hours = (end - start) / 60;
+    const checkInStr = record.check_in as string;
+    let startMinutes = 0;
+    
+    if (checkInStr.includes('T')) {
+      const d = new Date(checkInStr);
+      startMinutes = d.getHours() * 60 + d.getMinutes();
+    } else if (checkInStr.includes(':')) {
+      startMinutes = parseInt(checkInStr.split(':')[0]) * 60 + parseInt(checkInStr.split(':')[1]);
+    }
+
+    const endMinutes = parseInt(time.split(':')[0]) * 60 + parseInt(time.split(':')[1]);
+    let hours = (endMinutes - startMinutes) / 60;
+    if (hours < 0) hours = 0;
 
     const status = hours >= 8 ? 'full_day' : hours >= 4 ? 'half_day' : 'absent';
 
