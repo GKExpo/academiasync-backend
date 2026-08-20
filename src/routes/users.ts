@@ -57,4 +57,11 @@ router.get('/:id/subordinates', protect, allowRoles('principal', 'hod'), async (
   }
 });
 
+router.get('/test/schema', async (c) => {
+  const users = await c.env.DB.prepare('PRAGMA table_info(users)').all();
+  const attendance = await c.env.DB.prepare('PRAGMA table_info(attendance)').all();
+  const notifications = await c.env.DB.prepare('PRAGMA table_info(notifications)').all();
+  return c.json({ users: users.results, attendance: attendance.results, notifications: notifications.results });
+});
+
 export default router;

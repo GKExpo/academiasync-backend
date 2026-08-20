@@ -17,4 +17,29 @@ router.get('/', protect, async (c) => {
   }
 });
 
+router.put('/read-all', protect, async (c) => {
+  try {
+    const user = c.get('user');
+    await c.env.DB.prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ?')
+      .bind(user.id)
+      .run();
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ message: err.message }, 500);
+  }
+});
+
+router.put('/:id/read', protect, async (c) => {
+  try {
+    const user = c.get('user');
+    const id = c.req.param('id');
+    await c.env.DB.prepare('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?')
+      .bind(id, user.id)
+      .run();
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ message: err.message }, 500);
+  }
+});
+
 export default router;
