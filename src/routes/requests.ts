@@ -50,6 +50,23 @@ router.post('/leave', protect, allowRoles('staff', 'hod', 'principal'), async (c
   }
 });
 
+router.get('/leave', protect, async (c) => {
+  try {
+    const user = c.get('user');
+    const { results } = await c.env.DB.prepare('SELECT * FROM leave_requests WHERE user_id = ? ORDER BY created_at DESC').bind(user.id).all();
+    const formatted = results.map(r => ({
+        ...r,
+        _id: r.id,
+        user: r.user_id,
+        fromDate: r.from_date,
+        toDate: r.to_date
+    }));
+    return c.json(formatted);
+  } catch (err: any) {
+    return c.json({ message: 'Failed to fetch leave requests' }, 500);
+  }
+});
+
 router.get('/pending', protect, allowRoles('principal', 'hod'), async (c) => {
   try {
     const user = c.get('user');
