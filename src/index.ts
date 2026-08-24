@@ -29,7 +29,7 @@ app.use('*', cors({
 }));
 
 app.get('/', (c) => {
-  return c.text('AcademiaSync Backend (Cloudflare Workers) Running');
+  return c.text('Nexa Backend (Cloudflare Workers) Running');
 });
 
 app.get('/api/health', (c) => c.json({ status: 'ok' }));

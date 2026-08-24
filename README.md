@@ -1,4 +1,4 @@
-# AcademiaSync Backend
+# Nexa Backend
 
 This backend has been rebuilt to run on **Cloudflare Workers**, utilizing the **Hono** web framework and **Cloudflare D1** (SQLite) as its database.
 
